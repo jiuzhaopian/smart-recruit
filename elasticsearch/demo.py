@@ -27,7 +27,16 @@ def connect(host="http://localhost:9200"):
     """
     # 创建 Elasticsearch 客户端，指定主机地址
     # 项目中对应：self.es_client = Elasticsearch(config.ES_HOST)  (步骤 2.15)
-    pass
+
+    # ping() 验证连接
+
+
+    es = Elasticsearch(host)  # ← 应该使用传入的 host 参数
+
+    if es.ping():
+        info = es.info()
+        print(f"集群: {info['cluster_name']}, 版本: {info['version']['number']}")
+
     # ping() 方法验证连接是否成功，返回 True/False
     if es.ping():
         info = es.info()
@@ -56,7 +65,8 @@ def create_index(es, index_name="prerequisite_demo_chunks"):
         dict: 创建结果
     """
     # 如果索引已存在，先删除（demo 场景，保证幂等）
-    pass
+
+
 
     # 定义索引的 mapping（字段映射）
     # 项目中对应：步骤 2.16 检查索引是否存在并创建（项目未显式定义 mapping，使用动态映射）
@@ -86,7 +96,7 @@ def create_index(es, index_name="prerequisite_demo_chunks"):
     }
 
     # 创建索引
-    pass
+    result=es.indices.create(index="prerequisite_demo_chunks", body=mapping)
 
     print(f"[create_index] 索引创建成功: {index_name}")
     print(f"  确认信息: {result['acknowledged']}")
@@ -126,7 +136,7 @@ def index_document(es, index_name="prerequisite_demo_chunks"):
     #   index  - 目标索引名
     #   id     - 文档唯一标识（项目中使用 chunk.metadata["id"]）
     #   document - 文档内容（dict）
-    pass
+    result=es.index(index="prerequisite_demo_chunks", id="chunk_001", document=doc)
     print(f"[index_document] 文档已索引，ID: {result['_id']}, 结果: {result['result']}")
     return result
 
@@ -192,7 +202,7 @@ def bulk_index(es, index_name="prerequisite_demo_chunks"):
     # 使用 bulk() 批量写入
     # bulk() 接受一个可迭代对象，每个元素是一个操作描述
     # 返回 (success_count, error_list)
-    pass
+    success, errors = bulk(es, docs)
     print(f"[bulk_index] 批量索引完成，成功: {success} 条")
     if errors:
         print(f"  错误信息: {errors}")
@@ -220,7 +230,8 @@ def get_document(es, index_name="prerequisite_demo_chunks"):
 
     # get() 方法通过 ID 获取单个文档
     # 返回 dict，包含 _index、_id、_version、_source 等字段
-    pass
+    result = es.get(index="prerequisite_demo_chunks", id="chunk_001")
+
     print(f"[get_document] 文档 ID: {result['_id']}")
     print(f"  内容: {result['_source']['content'][:50]}...")
     print(f"  元数据: {result['_source']['metadata']}")
@@ -252,10 +263,13 @@ def search_match(es, index_name="prerequisite_demo_chunks"):
 
     # 构造 match 查询
     # match 会对 "Java开发经验" 分词，然后在 content 字段的倒排索引中查找
-    pass
+    body = {
+        "query": {"match": {"content": "Java开发经验"}},
+        "size": 5,
+    }
 
     # 执行搜索
-    pass
+    result = es.search(index="prerequisite_demo_chunks", body=body)
 
     hits = result["hits"]["hits"]
 
@@ -339,7 +353,11 @@ def update_document(es, index_name="prerequisite_demo_chunks"):
 
     # 使用 update() 方法部分更新
     # doc 参数指定要更新的字段及其新值
-    pass
+    result=es.update(
+        index="prerequisite_demo_chunks",
+        id="chunk_001",
+        body={"doc": {"content": "更新后的内容..."}},
+    )
     print(f"[update_document] 文档 {doc_id} 已更新，结果: {result['result']}")
 
     # 验证更新后的内容
@@ -368,7 +386,7 @@ def delete_document(es, index_name="prerequisite_demo_chunks"):
     doc_id = "chunk_004"
 
     # 使用 delete() 方法按 ID 删除文档
-    pass
+    result=es.delete(index="prerequisite_demo_chunks", id="chunk_004")
     print(f"[delete_document] 文档 {doc_id} 已删除，结果: {result['result']}")
 
     # 验证删除（预期抛出 NotFoundError）
