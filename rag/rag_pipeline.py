@@ -342,3 +342,4 @@ async def main2():
 
 
     asyncio.run(main1())
+    asyncio.run(main2())
