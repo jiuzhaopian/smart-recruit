@@ -290,7 +290,9 @@ class VectorStore:
                 mongo_data = self.get_metadata_by_hash(
                     hit['_source'].get('metadata', {}).get('hash'))#有就从mongo找补
                 if mongo_data:
-                    all_hits[hit['_id']] = {**hit['_source']['metadata'], **mongo_data.get('structured_data', {})}
+                    all_hits[hit['_id']] = {"text":hit['_source']['content'],
+                    **hit['_source']['metadata'],
+                    **mongo_data.get('structured_data', {})}
 
             #没有检索到任何内容返回空集
         if not all_hits:
@@ -322,6 +324,7 @@ class VectorStore:
                     final_metadata['doc_hash'] = doc_hash
                     final_docs.append(Document(page_content=mongo_doc.get('content', ''), metadata=final_metadata))
                     parent_hashes.add(doc_hash)
+            #topk筛选
             if len(final_docs) >= m:
                 break
 
